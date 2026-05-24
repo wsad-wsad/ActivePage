@@ -1,0 +1,12 @@
+[project]
+name = "ActivePage"
+version = "0.1.0"
+description = "recall quiz on book"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.136.1",
+    "openai>=2.37.0",
+    "pydantic>=2.13.4",
+    "uvicorn>=0.47.0",
+]

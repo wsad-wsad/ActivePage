@@ -1,0 +1,1697 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>ActivePage</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --bg: #0f0e0c;
+                --surface: #1a1916;
+                --surface2: #242220;
+                --border: #2e2c29;
+                --accent: #b8f565;
+                --accent2: #f5d565;
+                --text: #f0ede8;
+                --text-muted: #8a8780;
+                --quiz-bg: #131512;
+                --wrong: #ff6b6b;
+                --right: #b8f565;
+                --radius: 12px;
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family: "Outfit", sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            /* ── HEADER ── */
+            header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 14px 28px;
+                border-bottom: 1px solid var(--border);
+                background: var(--surface);
+                flex-shrink: 0;
+                gap: 12px;
+            }
+
+            .logo {
+                font-family: "Instrument Serif", serif;
+                font-size: 1.5rem;
+                letter-spacing: -0.02em;
+                color: var(--text);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .logo span {
+                color: var(--accent);
+            }
+
+            .header-right {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+            }
+
+            .streak-badge {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                padding: 6px 14px;
+                border-radius: 999px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: var(--accent2);
+            }
+            .streak-badge .crown {
+                font-size: 1rem;
+            }
+            .streak-badge .streak-count {
+                font-family: "DM Mono", monospace;
+            }
+
+            .btn-github {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                background: transparent;
+                border: 1px solid var(--border);
+                color: var(--text-muted);
+                padding: 6px 14px;
+                border-radius: 8px;
+                font-size: 0.8rem;
+                font-family: "DM Mono", monospace;
+                cursor: pointer;
+                text-decoration: none;
+                transition:
+                    border-color 0.2s,
+                    color 0.2s;
+            }
+            .btn-github:hover {
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+
+            .btn-upload {
+                background: var(--accent);
+                color: #0f0e0c;
+                border: none;
+                padding: 8px 18px;
+                border-radius: 8px;
+                font-size: 0.85rem;
+                font-weight: 700;
+                cursor: pointer;
+                font-family: "Outfit", sans-serif;
+                transition:
+                    opacity 0.2s,
+                    transform 0.1s;
+            }
+            .btn-upload:hover {
+                opacity: 0.88;
+                transform: translateY(-1px);
+            }
+
+            /* ── MAIN LAYOUT ── */
+            .main {
+                display: flex;
+                flex: 1;
+                overflow: hidden;
+                position: relative;
+            }
+
+            /* ── PDF VIEWER PANEL ── */
+            .pdf-panel {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                position: relative;
+            }
+
+            .pdf-viewer {
+                flex: 1;
+                overflow: auto;
+                display: flex;
+                align-items: flex-start;
+                justify-content: center;
+                padding: 28px;
+                background: var(--bg);
+            }
+
+            /* ── PDF TEXT LAYER WRAPPER ── */
+            .pdf-page-wrap {
+                position: relative;
+                display: none;
+                border-radius: var(--radius);
+                box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+                line-height: 1; /* critical for text layer alignment */
+            }
+
+            #pdf-canvas {
+                display: block;
+                border-radius: var(--radius);
+                background: #fff;
+            }
+
+            /* pdf.js text layer — sits exactly over the canvas */
+            .textLayer {
+                position: absolute;
+                top: 0;
+                left: 0;
+                overflow: hidden;
+                line-height: 1;
+                user-select: text;
+            }
+            .textLayer span {
+                color: transparent;
+                position: absolute;
+                white-space: pre;
+                cursor: text;
+                transform-origin: 0% 0%;
+            }
+            .textLayer ::selection {
+                background: rgba(184, 245, 101, 0.35);
+            }
+
+            /* ── MARKDOWN IN CHAT ── */
+            .msg.ai strong {
+                font-weight: 700;
+                color: var(--text);
+            }
+            .msg.ai em {
+                font-style: italic;
+                color: var(--text-muted);
+            }
+            .msg.ai code {
+                font-family: "DM Mono", monospace;
+                font-size: 0.78rem;
+                background: var(--bg);
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                padding: 1px 5px;
+            }
+            .msg.ai pre {
+                background: var(--bg);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                padding: 10px 12px;
+                margin: 6px 0;
+                overflow-x: auto;
+            }
+            .msg.ai pre code {
+                background: none;
+                border: none;
+                padding: 0;
+                font-size: 0.78rem;
+            }
+            .msg.ai ul,
+            .msg.ai ol {
+                padding-left: 18px;
+                margin: 4px 0;
+            }
+            .msg.ai li {
+                margin: 2px 0;
+                line-height: 1.5;
+            }
+            .msg.ai h1,
+            .msg.ai h2,
+            .msg.ai h3 {
+                font-family: "Instrument Serif", serif;
+                margin: 8px 0 4px;
+                color: var(--text);
+            }
+            .msg.ai h1 {
+                font-size: 1rem;
+            }
+            .msg.ai h2 {
+                font-size: 0.95rem;
+            }
+            .msg.ai h3 {
+                font-size: 0.9rem;
+            }
+            .msg.ai p {
+                margin: 4px 0;
+            }
+            .msg.ai a {
+                color: var(--accent);
+                text-decoration: underline;
+            }
+            .md-table-wrap {
+                overflow-x: auto;
+                margin: 6px 0;
+            }
+            .msg.ai table {
+                border-collapse: collapse;
+                font-size: 0.8rem;
+                min-width: 100%;
+            }
+            .msg.ai th,
+            .msg.ai td {
+                border: 1px solid var(--border);
+                padding: 6px 10px;
+                text-align: left;
+                white-space: nowrap;
+            }
+            .msg.ai th {
+                background: var(--surface2);
+                color: var(--text);
+                font-weight: 600;
+            }
+            .msg.ai tr:nth-child(even) td {
+                background: rgba(255, 255, 255, 0.02);
+            }
+
+            .pdf-placeholder {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 16px;
+                width: 100%;
+                height: 100%;
+                color: var(--text-muted);
+                text-align: center;
+            }
+            .pdf-placeholder .icon {
+                font-size: 3.5rem;
+                opacity: 0.4;
+            }
+            .pdf-placeholder p {
+                font-size: 0.95rem;
+                line-height: 1.6;
+                max-width: 280px;
+            }
+
+            /* ── PAGE NAV ── */
+            .page-nav {
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 16px;
+                padding: 14px 28px;
+                border-top: 1px solid var(--border);
+                background: var(--surface);
+            }
+
+            .nav-btn {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                color: var(--text);
+                width: 36px;
+                height: 36px;
+                border-radius: 8px;
+                font-size: 1rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition:
+                    background 0.2s,
+                    border-color 0.2s;
+            }
+            .nav-btn:hover:not(:disabled) {
+                background: var(--border);
+                border-color: var(--accent);
+            }
+            .nav-btn:disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+            }
+
+            .page-info {
+                font-family: "DM Mono", monospace;
+                font-size: 0.9rem;
+                color: var(--text-muted);
+                min-width: 80px;
+                text-align: center;
+            }
+
+            .quiz-manual-wrap {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+                margin-left: 12px;
+            }
+            .quiz-manual-hint {
+                font-size: 0.68rem;
+                color: var(--text-muted);
+                font-family: "DM Mono", monospace;
+                white-space: nowrap;
+                opacity: 0.8;
+            }
+            .btn-quiz {
+                background: var(--surface2);
+                color: var(--text-muted);
+                border: 1px dashed var(--border);
+                padding: 7px 18px;
+                border-radius: 8px;
+                font-size: 0.82rem;
+                font-weight: 600;
+                cursor: pointer;
+                font-family: "Outfit", sans-serif;
+                transition:
+                    opacity 0.2s,
+                    border-color 0.2s,
+                    color 0.2s;
+            }
+            .btn-quiz:hover:not(:disabled):not(.processing) {
+                border-color: var(--accent);
+                color: var(--text);
+            }
+            .btn-quiz:disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+            }
+            .btn-quiz.processing {
+                border-color: var(--accent2);
+                color: var(--accent2);
+                cursor: wait;
+                opacity: 1;
+            }
+
+            /* ── CHAT SIDEBAR ── */
+            .chat-sidebar {
+                width: 420px;
+                border-left: 1px solid var(--border);
+                display: flex;
+                flex-direction: column;
+                background: var(--surface);
+                flex-shrink: 0;
+                transition: width 0.3s ease;
+            }
+            .chat-sidebar.collapsed {
+                width: 0;
+                overflow: hidden;
+                border: none;
+            }
+
+            .chat-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 16px 18px;
+                border-bottom: 1px solid var(--border);
+                flex-shrink: 0;
+            }
+            .chat-header h3 {
+                font-size: 0.9rem;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .chat-header h3::before {
+                content: "";
+                width: 8px;
+                height: 8px;
+                background: var(--accent);
+                border-radius: 50%;
+                display: inline-block;
+            }
+
+            .btn-close-chat {
+                background: none;
+                border: none;
+                color: var(--text-muted);
+                cursor: pointer;
+                font-size: 1.1rem;
+                transition: color 0.2s;
+            }
+            .btn-close-chat:hover {
+                color: var(--text);
+            }
+
+            .chat-messages {
+                flex: 1;
+                overflow-y: auto;
+                padding: 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                scrollbar-width: thin;
+                scrollbar-color: var(--border) transparent;
+            }
+
+            .msg {
+                max-width: 88%;
+                padding: 10px 14px;
+                border-radius: 12px;
+                font-size: 0.85rem;
+                line-height: 1.55;
+                animation: msgIn 0.25s ease;
+            }
+            @keyframes msgIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(6px);
+                }
+                to {
+                    opacity: 1;
+                    transform: none;
+                }
+            }
+
+            .msg.user {
+                background: var(--accent);
+                color: #0f0e0c;
+                align-self: flex-end;
+                border-bottom-right-radius: 4px;
+            }
+            .msg.ai {
+                background: var(--surface2);
+                color: var(--text);
+                align-self: flex-start;
+                border-bottom-left-radius: 4px;
+                border: 1px solid var(--border);
+            }
+            .msg.typing {
+                color: var(--text-muted);
+                font-style: italic;
+            }
+
+            .chat-input-row {
+                display: flex;
+                gap: 8px;
+                padding: 14px;
+                border-top: 1px solid var(--border);
+                flex-shrink: 0;
+            }
+
+            .chat-input {
+                flex: 1;
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 10px 14px;
+                border-radius: 8px;
+                font-size: 0.85rem;
+                font-family: "Outfit", sans-serif;
+                resize: none;
+                outline: none;
+                transition: border-color 0.2s;
+                min-height: 40px;
+                max-height: 100px;
+            }
+            .chat-input::placeholder {
+                color: var(--text-muted);
+            }
+            .chat-input:focus {
+                border-color: var(--accent);
+            }
+
+            .btn-send {
+                background: var(--accent);
+                color: #0f0e0c;
+                border: none;
+                width: 38px;
+                height: 38px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 1rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: opacity 0.2s;
+                flex-shrink: 0;
+            }
+            .btn-send:hover {
+                opacity: 0.85;
+            }
+
+            /* ── CHAT TOGGLE BTN (when sidebar closed) ── */
+            .btn-chat-toggle {
+                position: fixed;
+                bottom: 28px;
+                right: 28px;
+                background: var(--accent);
+                color: #0f0e0c;
+                border: none;
+                padding: 12px 20px;
+                border-radius: 999px;
+                font-size: 0.85rem;
+                font-weight: 700;
+                cursor: pointer;
+                font-family: "Outfit", sans-serif;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                box-shadow: 0 4px 20px rgba(184, 245, 101, 0.3);
+                transition:
+                    transform 0.2s,
+                    box-shadow 0.2s;
+                z-index: 10;
+            }
+            .btn-chat-toggle:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 28px rgba(184, 245, 101, 0.4);
+            }
+            .btn-chat-toggle.hidden {
+                display: none;
+            }
+
+            /* ── QUIZ MODAL ── */
+            .quiz-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.75);
+                backdrop-filter: blur(6px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 100;
+                padding: 20px;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.25s ease;
+            }
+            .quiz-overlay.active {
+                opacity: 1;
+                pointer-events: all;
+            }
+
+            .quiz-card {
+                background: var(--quiz-bg);
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                width: 100%;
+                max-width: 560px;
+                max-height: 90vh;
+                overflow-y: auto;
+                padding: 32px;
+                transform: translateY(20px) scale(0.97);
+                transition: transform 0.3s ease;
+                scrollbar-width: thin;
+            }
+            .quiz-overlay.active .quiz-card {
+                transform: none;
+            }
+
+            .quiz-card-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 24px;
+            }
+            .quiz-label {
+                font-family: "DM Mono", monospace;
+                font-size: 0.75rem;
+                color: var(--accent);
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .quiz-label::before {
+                content: "";
+                width: 6px;
+                height: 6px;
+                background: var(--accent);
+                border-radius: 50%;
+                animation: pulse 1.5s infinite;
+            }
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.3;
+                }
+            }
+
+            .btn-close-quiz {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                color: var(--text-muted);
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 1.1rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: color 0.2s;
+            }
+            .btn-close-quiz:hover {
+                color: var(--text);
+            }
+
+            .quiz-progress {
+                display: flex;
+                gap: 6px;
+                margin-bottom: 24px;
+            }
+            .quiz-dot {
+                height: 4px;
+                border-radius: 2px;
+                flex: 1;
+                background: var(--border);
+                transition: background 0.3s;
+            }
+            .quiz-dot.done {
+                background: var(--accent);
+            }
+            .quiz-dot.current {
+                background: var(--accent2);
+            }
+
+            .quiz-question {
+                font-family: "Instrument Serif", serif;
+                font-size: 1.25rem;
+                line-height: 1.5;
+                margin-bottom: 24px;
+                color: var(--text);
+            }
+
+            .quiz-options {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+
+            .quiz-option {
+                background: var(--surface2);
+                border: 1.5px solid var(--border);
+                color: var(--text);
+                padding: 14px 18px;
+                border-radius: 10px;
+                text-align: left;
+                cursor: pointer;
+                font-family: "Outfit", sans-serif;
+                font-size: 0.9rem;
+                line-height: 1.4;
+                transition:
+                    border-color 0.15s,
+                    background 0.15s,
+                    transform 0.1s;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            .quiz-option:hover:not(:disabled) {
+                border-color: var(--accent);
+                transform: translateX(4px);
+            }
+            .quiz-option.correct {
+                border-color: var(--right);
+                background: rgba(184, 245, 101, 0.08);
+                color: var(--right);
+            }
+            .quiz-option.wrong {
+                border-color: var(--wrong);
+                background: rgba(255, 107, 107, 0.08);
+                color: var(--wrong);
+            }
+            .quiz-option:disabled {
+                cursor: default;
+                transform: none;
+            }
+
+            .option-letter {
+                font-family: "DM Mono", monospace;
+                font-size: 0.75rem;
+                color: var(--text-muted);
+                min-width: 20px;
+            }
+
+            .quiz-explanation {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-left: 3px solid var(--accent);
+                border-radius: 8px;
+                padding: 14px 16px;
+                font-size: 0.85rem;
+                line-height: 1.6;
+                color: var(--text-muted);
+                margin-bottom: 20px;
+                display: none;
+            }
+            .quiz-explanation.visible {
+                display: block;
+                animation: msgIn 0.25s ease;
+            }
+            .quiz-explanation strong {
+                color: var(--text);
+            }
+
+            .quiz-footer {
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+
+            .btn-next-q {
+                background: var(--accent);
+                color: #0f0e0c;
+                border: none;
+                padding: 10px 24px;
+                border-radius: 8px;
+                font-weight: 700;
+                font-size: 0.85rem;
+                cursor: pointer;
+                font-family: "Outfit", sans-serif;
+                transition: opacity 0.2s;
+                display: none;
+            }
+            .btn-next-q:hover {
+                opacity: 0.85;
+            }
+            .btn-next-q.visible {
+                display: block;
+            }
+
+            .quiz-loading {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 16px;
+                min-height: 200px;
+                color: var(--text-muted);
+            }
+            .spinner {
+                width: 32px;
+                height: 32px;
+                border: 3px solid var(--border);
+                border-top-color: var(--accent);
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            /* ── TOAST ── */
+            .toast {
+                position: fixed;
+                bottom: 90px;
+                left: 50%;
+                transform: translateX(-50%) translateY(20px);
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 10px 20px;
+                border-radius: 999px;
+                font-size: 0.85rem;
+                opacity: 0;
+                transition:
+                    opacity 0.2s,
+                    transform 0.2s;
+                pointer-events: none;
+                z-index: 200;
+                white-space: nowrap;
+            }
+            .toast.show {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+
+            /* ── RESULT SCREEN ── */
+            .quiz-result {
+                text-align: center;
+                padding: 16px 0;
+                display: none;
+            }
+            .quiz-result.visible {
+                display: block;
+            }
+            .result-score {
+                font-family: "Instrument Serif", serif;
+                font-size: 3.5rem;
+                color: var(--accent);
+                line-height: 1;
+                margin-bottom: 8px;
+            }
+            .result-label {
+                color: var(--text-muted);
+                font-size: 0.9rem;
+                margin-bottom: 24px;
+            }
+            .streak-earned {
+                font-size: 2rem;
+                margin-bottom: 8px;
+            }
+            .btn-done-quiz {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 10px 24px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-family: "Outfit", sans-serif;
+                font-size: 0.85rem;
+                margin-top: 16px;
+                transition: border-color 0.2s;
+            }
+            .btn-new-chat {
+                background: none;
+                border: 1px solid var(--border);
+                color: var(--text-muted);
+                padding: 4px 10px;
+                border-radius: 6px;
+                font-size: 0.75rem;
+                font-family: "DM Mono", monospace;
+                cursor: pointer;
+                transition:
+                    border-color 0.2s,
+                    color 0.2s;
+                white-space: nowrap;
+            }
+            .btn-new-chat:hover {
+                border-color: var(--accent);
+                color: var(--text);
+            }
+            ::-webkit-scrollbar {
+                width: 6px;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: var(--border);
+                border-radius: 3px;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- HEADER -->
+        <header>
+            <div class="logo">Active<span>Page</span></div>
+            <div class="header-right">
+                <div class="streak-badge">
+                    <span class="crown">👑</span>
+                    <span class="streak-count" id="streak-count">0</span>
+                    <span style="color: var(--text-muted); font-weight: 400"
+                        >streak</span
+                    >
+                </div>
+                <a
+                    class="btn-github"
+                    href="https://github.com/wsad-wsad/ActivePage"
+                    target="_blank"
+                >
+                    <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                    >
+                        <path
+                            d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"
+                        />
+                    </svg>
+                    GitHub
+                </a>
+                <label class="btn-upload">
+                    Upload PDF
+                    <input
+                        type="file"
+                        accept="application/pdf"
+                        id="pdf-input"
+                        style="display: none"
+                    />
+                </label>
+            </div>
+        </header>
+
+        <!-- MAIN -->
+        <div class="main">
+            <!-- PDF panel -->
+            <div class="pdf-panel">
+                <div class="pdf-viewer">
+                    <div class="pdf-page-wrap" id="pdf-page-wrap">
+                        <canvas id="pdf-canvas"></canvas>
+                        <div id="text-layer" class="textLayer"></div>
+                    </div>
+                    <div class="pdf-placeholder" id="pdf-placeholder">
+                        <div class="icon">📖</div>
+                        <p>
+                            Upload a PDF to start reading.<br />A quiz will pop
+                            up as you turn pages to test your understanding.
+                        </p>
+                    </div>
+                </div>
+                <div class="page-nav">
+                    <button class="nav-btn" id="btn-prev" disabled>‹</button>
+                    <span class="page-info" id="page-info">— / —</span>
+                    <button class="nav-btn" id="btn-next" disabled>›</button>
+                    <div class="quiz-manual-wrap">
+                        <button class="btn-quiz" id="btn-quiz" disabled>
+                            ⚡ Quiz Me
+                        </button>
+                        <span class="quiz-manual-hint"
+                            >not part of the flow · self-test only</span
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat sidebar -->
+            <div class="chat-sidebar" id="chat-sidebar">
+                <div class="chat-header">
+                    <h3>AI Chat</h3>
+                    <div style="display: flex; align-items: center; gap: 8px">
+                        <button
+                            class="btn-new-chat"
+                            id="btn-new-chat"
+                            title="Clear conversation"
+                        >
+                            New chat
+                        </button>
+                        <button
+                            class="btn-close-chat"
+                            id="btn-close-chat"
+                            title="Close chat"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <div class="msg ai">
+                        Hi! I'm here to help you understand what you're reading.
+                        Ask me anything about the current page. 📚
+                    </div>
+                </div>
+                <div class="chat-input-row">
+                    <textarea
+                        class="chat-input"
+                        id="chat-input"
+                        placeholder="Ask about this page…"
+                        rows="1"
+                    ></textarea>
+                    <button class="btn-send" id="btn-send" title="Send">
+                        ↑
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat toggle -->
+        <button class="btn-chat-toggle hidden" id="btn-chat-toggle">
+            💬 AI Chat
+        </button>
+
+        <!-- Toast -->
+        <div class="toast" id="toast"></div>
+
+        <!-- QUIZ MODAL -->
+        <div class="quiz-overlay" id="quiz-overlay">
+            <div class="quiz-card">
+                <div id="quiz-inner">
+                    <!-- dynamically filled -->
+                </div>
+            </div>
+        </div>
+
+        <!-- PDF.js -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+        <script>
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+                "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+            // ── STATE ──
+            let pdfDoc = null,
+                currentPage = 1,
+                totalPages = 0;
+            let streak = 0;
+            let quizData = null;
+            let currentQ = 0;
+            let correctCount = 0;
+            let quizAnswered = false;
+
+            // add-page tracking
+            const sentPages = new Set(); // pages already POSTed to /add-page
+
+            // ── QUIZ QUEUE (capacity 2) ──
+            // Holds up to 2 pre-fetched quiz payloads so instant delivery is always ready.
+            const QUEUE_CAPACITY = 2;
+            const quizQueue = []; // array of { mcq: [...] }
+            let fillInFlight = 0; // how many fetch()es are currently running
+
+            function fillQuizQueue() {
+                if (!pdfDoc) return; // no book loaded — don't prefetch
+                // Launch as many fetches as needed to reach capacity, without over-fetching
+                const needed = QUEUE_CAPACITY - quizQueue.length - fillInFlight;
+                for (let i = 0; i < needed; i++) {
+                    fillInFlight++;
+                    fetch("/mcq")
+                        .then((r) => (r.ok ? r.json() : null))
+                        .then((data) => {
+                            if (data) quizQueue.push(data);
+                        })
+                        .catch(() => {})
+                        .finally(() => {
+                            fillInFlight--;
+                            // If something failed and queue is still short, retry once
+                            if (
+                                pdfDoc &&
+                                quizQueue.length + fillInFlight < QUEUE_CAPACITY
+                            )
+                                fillQuizQueue();
+                        });
+                }
+            }
+
+            function dequeueQuiz() {
+                // Pop one from the front, then refill the queue in the background
+                const data = quizQueue.shift() || null;
+                fillQuizQueue(); // always try to top back up
+                return data;
+            }
+
+            // ── ELEMENTS ──
+            const canvas = document.getElementById("pdf-canvas");
+            const ctx = canvas.getContext("2d");
+            const pageWrap = document.getElementById("pdf-page-wrap");
+            const textLayerDiv = document.getElementById("text-layer");
+            const placeholder = document.getElementById("pdf-placeholder");
+            const pageInfo = document.getElementById("page-info");
+            const btnPrev = document.getElementById("btn-prev");
+            const btnNext = document.getElementById("btn-next");
+            const btnQuiz = document.getElementById("btn-quiz");
+            const streakCount = document.getElementById("streak-count");
+            const quizOverlay = document.getElementById("quiz-overlay");
+            const quizInner = document.getElementById("quiz-inner");
+            const chatSidebar = document.getElementById("chat-sidebar");
+            const chatMessages = document.getElementById("chat-messages");
+            const chatInput = document.getElementById("chat-input");
+            const btnSend = document.getElementById("btn-send");
+            const btnCloseSidebar = document.getElementById("btn-close-chat");
+            const btnNewChat = document.getElementById("btn-new-chat");
+            const btnChatToggle = document.getElementById("btn-chat-toggle");
+            const toastEl = document.getElementById("toast");
+
+            // ── TOAST ──
+            function showToast(msg, duration = 2500) {
+                toastEl.textContent = msg;
+                toastEl.classList.add("show");
+                setTimeout(() => toastEl.classList.remove("show"), duration);
+            }
+
+            // ── STREAK ──
+            function updateStreak(val) {
+                streak = val;
+                streakCount.textContent = streak;
+            }
+
+            // ── PDF RENDER ──
+            async function renderPage(num) {
+                const page = await pdfDoc.getPage(num);
+                const DPR = window.devicePixelRatio || 1;
+                const RENDER_SCALE = 2.0;
+
+                // CSS viewport: what the user sees (sharp but reasonably sized)
+                const cssViewport = page.getViewport({ scale: RENDER_SCALE });
+                const cssW = cssViewport.width / DPR;
+                const cssH = cssViewport.height / DPR;
+
+                // Canvas: drawn at 2× for sharpness, displayed at cssW/cssH via CSS
+                canvas.width = cssViewport.width;
+                canvas.height = cssViewport.height;
+                canvas.style.width = cssW + "px";
+                canvas.style.height = cssH + "px";
+                await page.render({ canvasContext: ctx, viewport: cssViewport })
+                    .promise;
+
+                // Text layer: sized to CSS pixels so hit areas match what the eye sees.
+                // pdf.js uses --scale-factor to position spans; we set it to the
+                // effective CSS scale (RENDER_SCALE / DPR) so spans land on the glyphs.
+                const cssScale = RENDER_SCALE / DPR;
+                const textViewport = page.getViewport({ scale: cssScale });
+
+                textLayerDiv.innerHTML = "";
+                textLayerDiv.style.transform = ""; // no CSS transform needed
+                textLayerDiv.style.width = cssW + "px";
+                textLayerDiv.style.height = cssH + "px";
+                textLayerDiv.style.setProperty("--scale-factor", cssScale);
+
+                const textContent = await page.getTextContent();
+                await pdfjsLib.renderTextLayer({
+                    textContentSource: textContent,
+                    container: textLayerDiv,
+                    viewport: textViewport, // matches the CSS display size exactly
+                    textDivs: [],
+                }).promise;
+            }
+
+            // Extract text from a page number (1-indexed)
+            async function getPageText(num) {
+                const page = await pdfDoc.getPage(num);
+                const content = await page.getTextContent();
+                return content.items.map((i) => i.str).join(" ");
+            }
+
+            // POST /add-page only for pages we haven't sent yet, only on forward navigation
+            async function sendPageIfNew(num) {
+                if (sentPages.has(num)) return;
+                sentPages.add(num);
+                try {
+                    const text = await getPageText(num);
+                    // FastAPI reads `page` as a query param: POST /add-page?page=...
+                    await fetch(`/add-page?page=${encodeURIComponent(text)}`, {
+                        method: "POST",
+                    });
+                } catch (e) {
+                    /* silent — backend may not be running in dev */
+                }
+            }
+
+            let nextQuizAtPage = null; // page number that will trigger the auto popup
+
+            // Pick the next random auto-quiz trigger page (1–3 pages ahead)
+            function scheduleNextQuiz() {
+                const gap = Math.floor(Math.random() * 3) + 1;
+                nextQuizAtPage = currentPage + gap;
+            }
+
+            async function goToPage(num, isForward = false) {
+                if (!pdfDoc || num < 1 || num > totalPages) return;
+                currentPage = num;
+                await renderPage(currentPage);
+                pageInfo.textContent = `${currentPage} / ${totalPages}`;
+                btnPrev.disabled = currentPage === 1;
+                btnNext.disabled = currentPage === totalPages;
+                btnQuiz.disabled = false;
+
+                // Only send new pages to backend on forward navigation
+                if (isForward) {
+                    await sendPageIfNew(currentPage);
+                }
+            }
+
+            // ── UPLOAD PDF ──
+            document
+                .getElementById("pdf-input")
+                .addEventListener("change", async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    // Reset book state on the backend, clear local page tracking
+                    sentPages.clear();
+                    quizQueue.length = 0; // drain the queue so stale quizzes aren't served
+                    fillInFlight = 0;
+                    try {
+                        await fetch("/book", { method: "DELETE" });
+                    } catch (e) {
+                        /* silent */
+                    }
+
+                    const arrayBuffer = await file.arrayBuffer();
+                    pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer })
+                        .promise;
+                    totalPages = pdfDoc.numPages;
+                    placeholder.style.display = "none";
+                    canvas.style.display = "block";
+                    // Go to page 1, send it, schedule first quiz, start prefetch
+                    await goToPage(1, true);
+                    pageWrap.style.display = "block";
+                    scheduleNextQuiz();
+                    fillQuizQueue(); // start filling the 2-slot queue
+                    showToast(`📄 Loaded ${file.name} — ${totalPages} pages`);
+                });
+
+            btnPrev.addEventListener("click", () =>
+                goToPage(currentPage - 1, false),
+            );
+
+            btnNext.addEventListener("click", async () => {
+                const prevPage = currentPage;
+                await goToPage(currentPage + 1, true);
+
+                // Check if we've hit the scheduled auto-quiz page
+                if (nextQuizAtPage && currentPage >= nextQuizAtPage) {
+                    scheduleNextQuiz();
+                    await triggerQuiz(/* isAuto */ true);
+                } else {
+                    fillQuizQueue(); // keep the queue topped up as user pages forward
+                }
+            });
+
+            // ── QUIZ ──
+            btnQuiz.addEventListener("click", () => triggerQuiz(false));
+
+            function setQuizBtnProcessing(on) {
+                if (on) {
+                    btnQuiz.textContent = "⏳ Processing…";
+                    btnQuiz.classList.add("processing");
+                    btnQuiz.disabled = true;
+                } else {
+                    btnQuiz.textContent = "⚡ Quiz Me";
+                    btnQuiz.classList.remove("processing");
+                    btnQuiz.disabled = false;
+                }
+            }
+
+            async function triggerQuiz(isAuto = false) {
+                if (!pdfDoc) return;
+
+                // ── MANUAL: don't open modal until data is ready ──
+                if (!isAuto) {
+                    const ready = dequeueQuiz();
+                    if (ready) {
+                        // Instant — pulled straight from the queue
+                        quizData = ready;
+                        currentQ = 0;
+                        correctCount = 0;
+                        openQuizOverlay();
+                        renderQuestion();
+                    } else {
+                        // Queue empty — show processing on button, fetch live
+                        setQuizBtnProcessing(true);
+                        try {
+                            const res = await fetch("/mcq");
+                            if (!res.ok) throw new Error("API error");
+                            quizData = await res.json();
+                            currentQ = 0;
+                            correctCount = 0;
+                            openQuizOverlay();
+                            renderQuestion();
+                            fillQuizQueue(); // top up after consuming
+                        } catch {
+                            showToast(
+                                "⚠️ Could not load quiz. Is the backend running?",
+                                3500,
+                            );
+                        } finally {
+                            setQuizBtnProcessing(false);
+                        }
+                    }
+                    return;
+                }
+
+                // ── AUTO: open modal (user expects it), show spinner only if queue is empty ──
+                openQuizOverlay();
+                const ready = dequeueQuiz();
+                if (ready) {
+                    quizData = ready;
+                    currentQ = 0;
+                    correctCount = 0;
+                    renderQuestion();
+                } else {
+                    renderQuizLoading();
+                    try {
+                        const res = await fetch("/mcq");
+                        if (!res.ok) throw new Error("API error");
+                        quizData = await res.json();
+                        currentQ = 0;
+                        correctCount = 0;
+                        renderQuestion();
+                        fillQuizQueue();
+                    } catch {
+                        quizInner.innerHTML = `<div class="quiz-loading"><p style="color:var(--wrong)">⚠️ Could not load quiz.</p><button class="btn-done-quiz" onclick="closeQuiz()">Close</button></div>`;
+                    }
+                }
+            }
+
+            function openQuizOverlay() {
+                quizOverlay.classList.add("active");
+            }
+            function closeQuiz() {
+                quizOverlay.classList.remove("active");
+                quizData = null;
+            }
+
+            function renderQuizLoading() {
+                quizInner.innerHTML = `
+      <div class="quiz-card-header">
+        <span class="quiz-label">Quiz</span>
+        <button class="btn-close-quiz" onclick="closeQuiz()">×</button>
+      </div>
+      <div class="quiz-loading">
+        <div class="spinner"></div>
+        <span>Generating questions from page ${currentPage}…</span>
+      </div>`;
+            }
+
+            function renderQuestion() {
+                const items = quizData.mcq;
+                if (currentQ >= items.length) {
+                    renderResult();
+                    return;
+                }
+                const q = items[currentQ];
+                // Shuffle options
+                const all = [...q.wrong_answer, q.right_answer].sort(
+                    () => Math.random() - 0.5,
+                );
+                const letters = ["A", "B", "C", "D", "E", "F"];
+
+                const dotsHtml = items
+                    .map((_, i) => {
+                        let cls = "quiz-dot";
+                        if (i < currentQ) cls += " done";
+                        if (i === currentQ) cls += " current";
+                        return `<div class="${cls}"></div>`;
+                    })
+                    .join("");
+
+                const optionsHtml = all
+                    .map(
+                        (opt, i) => `
+      <button class="quiz-option" onclick="selectOption(this, '${escHtml(opt)}', '${escHtml(q.right_answer)}')" data-answer="${escHtml(opt)}">
+        <span class="option-letter">${letters[i]}</span>
+        ${escHtml(opt)}
+      </button>`,
+                    )
+                    .join("");
+
+                quizInner.innerHTML = `
+      <div class="quiz-card-header">
+        <span class="quiz-label">Quiz · ${currentQ + 1} of ${items.length}</span>
+        <button class="btn-close-quiz" onclick="closeQuiz()">×</button>
+      </div>
+      <div class="quiz-progress">${dotsHtml}</div>
+      <p class="quiz-question">${escHtml(q.question)}</p>
+      <div class="quiz-options">${optionsHtml}</div>
+      <div class="quiz-explanation" id="quiz-explanation">
+        <strong>Explanation:</strong> ${parseMarkdown(q.explanation)}
+      </div>
+      <div class="quiz-footer">
+        <button class="btn-next-q" id="btn-next-q" onclick="nextQuestion()">
+          ${currentQ + 1 < items.length ? "Next →" : "See Results"}
+        </button>
+      </div>`;
+                quizAnswered = false;
+            }
+
+            function selectOption(btn, chosen, correct) {
+                if (quizAnswered) return;
+                quizAnswered = true;
+                const all = btn.parentElement.querySelectorAll(".quiz-option");
+                all.forEach((b) => {
+                    b.disabled = true;
+                    if (b.dataset.answer === correct)
+                        b.classList.add("correct");
+                });
+                if (chosen !== correct) {
+                    btn.classList.add("wrong");
+                } else {
+                    correctCount++;
+                }
+                document
+                    .getElementById("quiz-explanation")
+                    .classList.add("visible");
+                document.getElementById("btn-next-q").classList.add("visible");
+            }
+
+            function nextQuestion() {
+                currentQ++;
+                renderQuestion();
+            }
+
+            function renderResult() {
+                const total = quizData.mcq.length;
+                const pct = Math.round((correctCount / total) * 100);
+                const passed = correctCount >= Math.ceil(total / 2);
+                if (passed) updateStreak(streak + 1);
+                else updateStreak(0);
+
+                quizInner.innerHTML = `
+      <div class="quiz-card-header">
+        <span class="quiz-label">Results</span>
+        <button class="btn-close-quiz" onclick="closeQuiz()">×</button>
+      </div>
+      <div class="quiz-result visible">
+        <div class="result-score">${correctCount}/${total}</div>
+        <div class="result-label">${pct}% correct</div>
+        ${
+            passed
+                ? `<div class="streak-earned">🏆</div><p style="color:var(--accent);font-weight:600;">Streak is now ${streak}!</p>`
+                : `<p style="color:var(--text-muted);">Keep reading and try again!</p>`
+        }
+        <button class="btn-done-quiz" onclick="closeQuiz()">Back to Reading</button>
+      </div>`;
+            }
+
+            function escHtml(s) {
+                return String(s).replace(
+                    /[&<>"']/g,
+                    (c) =>
+                        ({
+                            "&": "&amp;",
+                            "<": "&lt;",
+                            ">": "&gt;",
+                            '"': "&quot;",
+                            "'": "&#39;",
+                        })[c],
+                );
+            }
+
+            // ── CHAT ──
+            function toggleChat(open) {
+                if (open) {
+                    chatSidebar.classList.remove("collapsed");
+                    btnChatToggle.classList.add("hidden");
+                } else {
+                    chatSidebar.classList.add("collapsed");
+                    btnChatToggle.classList.remove("hidden");
+                }
+            }
+
+            btnCloseSidebar.addEventListener("click", () => toggleChat(false));
+            btnChatToggle.addEventListener("click", () => toggleChat(true));
+
+            btnNewChat.addEventListener("click", async () => {
+                try {
+                    await fetch("/chat", { method: "DELETE" });
+                } catch (e) {
+                    /* silent */
+                }
+                chatMessages.innerHTML =
+                    '<div class="msg ai">New conversation started. Ask me anything about the current page. 📚</div>';
+            });
+
+            async function sendChat() {
+                const text = chatInput.value.trim();
+                if (!text) return;
+                if (!pdfDoc) {
+                    chatInput.value = "";
+                    appendMsg(text, "user");
+                    appendMsg(
+                        "Please upload a book first — I can only answer questions about what you're reading. 📖",
+                        "ai",
+                    );
+                    return;
+                }
+                chatInput.value = "";
+                appendMsg(text, "user");
+                const typing = appendMsg("Thinking…", "ai typing");
+                try {
+                    const params = new URLSearchParams({ text });
+                    const res = await fetch(`/chat?${params}`);
+                    const data = await res.json();
+                    typing.remove();
+                    appendMsg(
+                        typeof data === "string" ? data : JSON.stringify(data),
+                        "ai",
+                    );
+                } catch {
+                    typing.remove();
+                    appendMsg("⚠️ Could not reach the backend.", "ai");
+                }
+            }
+
+            // ── MARKDOWN PARSER ──
+            function parseMarkdown(md) {
+                const esc = (s) =>
+                    String(s)
+                        .replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;");
+
+                // Work line-by-line for block elements, then inline for the rest
+                const lines = md.split("\n");
+                const blocks = [];
+                let i = 0;
+
+                while (i < lines.length) {
+                    const line = lines[i];
+
+                    // ── Fenced code block
+                    if (/^```/.test(line)) {
+                        const codeLines = [];
+                        i++;
+                        while (i < lines.length && !/^```/.test(lines[i])) {
+                            codeLines.push(lines[i]);
+                            i++;
+                        }
+                        blocks.push(
+                            `<pre><code>${esc(codeLines.join("\n"))}</code></pre>`,
+                        );
+                        i++;
+                        continue;
+                    }
+
+                    // ── Table: detect by | in current + next separator line
+                    if (
+                        /^\|/.test(line) &&
+                        i + 1 < lines.length &&
+                        /^\|[\s\|:\-]+\|/.test(lines[i + 1])
+                    ) {
+                        const headerCells = line
+                            .split("|")
+                            .slice(1, -1)
+                            .map((c) => `<th>${inlinemd(c.trim())}</th>`)
+                            .join("");
+                        i += 2; // skip header + separator
+                        const rows = [];
+                        while (i < lines.length && /^\|/.test(lines[i])) {
+                            const cells = lines[i]
+                                .split("|")
+                                .slice(1, -1)
+                                .map((c) => `<td>${inlinemd(c.trim())}</td>`)
+                                .join("");
+                            rows.push(`<tr>${cells}</tr>`);
+                            i++;
+                        }
+                        blocks.push(
+                            `<div class="md-table-wrap"><table><thead><tr>${headerCells}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`,
+                        );
+                        continue;
+                    }
+
+                    // ── Headings
+                    const hm = line.match(/^(#{1,3}) (.+)/);
+                    if (hm) {
+                        blocks.push(
+                            `<h${hm[1].length}>${inlinemd(hm[2])}</h${hm[1].length}>`,
+                        );
+                        i++;
+                        continue;
+                    }
+
+                    // ── HR
+                    if (/^---+$/.test(line.trim())) {
+                        blocks.push("<hr>");
+                        i++;
+                        continue;
+                    }
+
+                    // ── Unordered list
+                    if (/^[\-\*] /.test(line)) {
+                        const items = [];
+                        while (i < lines.length && /^[\-\*] /.test(lines[i])) {
+                            items.push(
+                                `<li>${inlinemd(lines[i].replace(/^[\-\*] /, ""))}</li>`,
+                            );
+                            i++;
+                        }
+                        blocks.push(`<ul>${items.join("")}</ul>`);
+                        continue;
+                    }
+
+                    // ── Ordered list
+                    if (/^\d+\. /.test(line)) {
+                        const items = [];
+                        while (i < lines.length && /^\d+\. /.test(lines[i])) {
+                            items.push(
+                                `<li>${inlinemd(lines[i].replace(/^\d+\. /, ""))}</li>`,
+                            );
+                            i++;
+                        }
+                        blocks.push(`<ol>${items.join("")}</ol>`);
+                        continue;
+                    }
+
+                    // ── Blank line → paragraph break (already handled by block separation)
+                    if (line.trim() === "") {
+                        i++;
+                        continue;
+                    }
+
+                    // ── Regular paragraph — collect until blank line or block element
+                    const paraLines = [];
+                    while (
+                        i < lines.length &&
+                        lines[i].trim() !== "" &&
+                        !/^(#{1,3} |```|[\-\*] |\d+\. |---+$|\|)/.test(lines[i])
+                    ) {
+                        paraLines.push(lines[i]);
+                        i++;
+                    }
+                    if (paraLines.length)
+                        blocks.push(
+                            `<p>${inlinemd(paraLines.join("<br>"))}</p>`,
+                        );
+                }
+
+                return blocks.join("\n");
+            }
+
+            // Inline markdown (bold, italic, code, links) — operates on already-block-parsed strings
+            function inlinemd(s) {
+                const esc = (t) =>
+                    String(t)
+                        .replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;");
+                return s
+                    .replace(/`([^`]+)`/g, (_, c) => `<code>${esc(c)}</code>`)
+                    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+                    .replace(/__(.+?)__/g, "<strong>$1</strong>")
+                    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+                    .replace(/_(.+?)_/g, "<em>$1</em>")
+                    .replace(
+                        /\[([^\]]+)\]\(([^)]+)\)/g,
+                        '<a href="$2" target="_blank" rel="noopener">$1</a>',
+                    );
+            }
+
+            function appendMsg(text, type) {
+                const div = document.createElement("div");
+                div.className = `msg ${type}`;
+                if (type.includes("ai") && !type.includes("typing")) {
+                    div.innerHTML = parseMarkdown(text);
+                } else {
+                    div.textContent = text;
+                }
+                chatMessages.appendChild(div);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                return div;
+            }
+
+            btnSend.addEventListener("click", sendChat);
+            chatInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendChat();
+                }
+            });
+
+            // auto-resize textarea
+            chatInput.addEventListener("input", () => {
+                chatInput.style.height = "auto";
+                chatInput.style.height = chatInput.scrollHeight + "px";
+            });
+        </script>
+    </body>
+</html>

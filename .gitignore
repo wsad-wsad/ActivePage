@@ -1,0 +1,8 @@
+# python
+__pycache__*
+.venv
+test
+
+# model & llama.cpp
+*.gguf
+atomic-llama-cpp-turboquant*
