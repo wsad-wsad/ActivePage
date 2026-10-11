@@ -1,4 +1,11 @@
 {
-  "name": "active page",
-  "packageManager": "yarn@4.18.0"
+  "name": "active-page",
+  "packageManager": "bun@1.4.2",
+  "devDependencies": {
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "openai": "^7.27.0"
+  }
 }
